@@ -1,0 +1,22 @@
+{
+  "campaigns": [
+    {
+      "name": "A Most Potent Brew",
+      "description": "A brewing competition turns deadly when a mysterious brew causes chaos.",
+      "difficulty": "1",
+      "monsters": ["Goblin", "Kobold", "Rat"]
+    },
+    {
+      "name": "The Wolves of Welton",
+      "description": "Wolves are terrorizing the town of Welton. Discover why they’ve turned violent.",
+      "difficulty": "2",
+      "monsters": ["Wolf", "Worg", "Dire Wolf"]
+    },
+    {
+      "name": "A Wild Sheep Chase",
+      "description": "A whimsical adventure involving a magical sheep and a frantic chase across the countryside.",
+      "difficulty": "3",
+      "monsters": ["Sheep", "Blink Dog", "Displacer Beast"]
+    }
+  ]
+}
