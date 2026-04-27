@@ -9,6 +9,9 @@ A simple, terminal-based D&D-style text adventure game powered by the [Open5e AP
 - **Open5e API integration** – fetches monsters and spells from the SRD
 - **Progressive difficulty** – each floor features tougher monsters
 - **Rest system** – heal between encounters
+- **Randomized Boss Encounters** – bosses appear at random 4‑7 room intervals
+- **Loot System** – bosses drop legendary items; regular rooms drop scaled gear
+- **Save/Load Support** – save progress after each room and resume later
 
 ## Quick Start
 
@@ -29,7 +32,13 @@ python3 dungeon_game.py
    - **Rogue** – High damage, critical hits
    - **Wizard** – Spellcaster with fireball, magic missile, and shield
 3. Enter rooms, fight monsters, and survive as long as you can!
-4. After each victory, take a short rest to heal.
+4. After each victory:
+   - **Boss fights** (every 4‑7 rooms) grant legendary loot via a d20 roll.
+   - **Regular rooms** may drop minor or good items (no legendaries).
+5. After each room you can:
+   - Take a short rest to heal.
+   - Save your progress (type `s`).
+6. On next launch, the game will detect your save and offer to resume.
 
 ## Requirements
 
