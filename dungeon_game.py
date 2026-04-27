@@ -6,6 +6,36 @@ A simple D&D-style text adventure using the Open5e API for monsters and spells.
 
 import requests
 import random
+import json
+import os
+
+# ----------------- Save / Load system -----------------
+SAVE_FILE = "dnd_save.json"
+
+def save_game(state):
+    """Persist the current game state to disk.
+    The state dict contains player info, current room, monsters list and any other needed data."""
+    try:
+        with open(SAVE_FILE, "w", encoding="utf-8") as f:
+            json.dump(state, f, indent=2)
+        print_color("Game saved to " + SAVE_FILE, Colors.YELLOW)
+    except Exception as e:
+        print_color("Failed to save game: {}".format(e), Colors.RED)
+
+def load_game():
+    """Load a saved state if one exists. Returns None if nothing was found."""
+    if not os.path.exists(SAVE_FILE):
+        return None
+    try:
+        with open(SAVE_FILE, "r", encoding="utf-8") as f:
+            state = json.load(f)
+        print_color("Loaded saved game from " + SAVE_FILE, Colors.YELLOW)
+        return state
+    except Exception as e:
+        print_color("Failed to load save: {}".format(e), Colors.RED)
+        return None
+
+# ----------------------------------------------------------
 
 API_BASE = "https://api.open5e.com"
 
@@ -311,9 +341,28 @@ def main():
     print_color("   DUNGEON OF THE OPEN5E", Colors.PURPLE)
     print_color("=" * 50, Colors.BOLD)
 
-    player = create_character()
-    monsters = get_monsters()
-    rooms = 1
+    # Check for saved game
+    state = load_game()
+    if state:
+        ans = input("Load saved game? (y/n): ").strip().lower()
+        if ans == "y":
+            player = state["player"]
+            rooms = state["rooms"]
+            monsters = state.get("monsters", get_monsters())
+            print_color(f"Resuming game at room {rooms}...", Colors.GREEN)
+        else:
+            # Remove outdated save and start fresh
+            try:
+                os.remove(SAVE_FILE)
+            except:
+                pass
+            player = create_character()
+            monsters = get_monsters()
+            rooms = 1
+    else:
+        player = create_character()
+        monsters = get_monsters()
+        rooms = 1
 
     while player["hp"] > 0:
         print_color(f"\n=== Room {rooms} ===", Colors.BOLD)
@@ -359,6 +408,10 @@ def main():
             print_color(f"You heal {heal} HP!", Colors.GREEN)
 
         rooms += 1
+        # Prompt to save after each room
+        save_choice = input("Save progress? (s) or continue: ").strip().lower()
+        if save_choice == 's':
+            save_game({"player": player, "rooms": rooms, "monsters": monsters})
 
         # Refresh normal monster list every 3 rooms with higher challenge rating
         if rooms % 3 == 0:
