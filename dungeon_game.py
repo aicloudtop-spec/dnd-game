@@ -336,6 +336,42 @@ def combat(player, monster, is_boss=False):
         return False
 
 # Main game loop
+
+def new_boss_counter():
+    """Random rooms (4-7) until next boss."""
+    return random.randint(4, 7)
+
+def grant_room_reward(player):
+    """Non-boss room loot (no epic items)."""
+    print_color("\n*** You search the room... ***", Colors.YELLOW)
+    roll = roll_d20()
+    print_color(f"Loot roll: {roll}", Colors.YELLOW)
+    
+    if roll <= 4:
+        print_color("You find nothing but dust.", Colors.RED)
+    elif roll <= 12:
+        pool = [
+            {"name": "Minor Healing Potion", "effect": "heal", "value": 5, "desc": "A vial of weak healing."},
+            {"name": "Rusty Dagger", "effect": "damage", "value": 1, "desc": "+1 damage."},
+            {"name": "Leather Bracer", "effect": "ac", "value": 1, "desc": "+1 AC."},
+        ]
+        chosen = random.choice(pool)
+        print_color(f"You found: {chosen['name']}!", Colors.GREEN)
+        print_color(f"  {chosen['desc']}", Colors.GREEN)
+        apply_item(player, chosen)
+    else:
+        pool = [
+            {"name": "Healing Potion", "effect": "heal", "value": 10, "desc": "A vial of healing fluid."},
+            {"name": "Sharpening Stone", "effect": "damage", "value": 2, "desc": "+2 damage."},
+            {"name": "Shield Ring", "effect": "ac", "value": 1, "desc": "+1 AC."},
+            {"name": "Vitality Gem", "effect": "max_hp", "value": 5, "desc": "+5 max HP."},
+        ]
+        chosen = random.choice(pool)
+        print_color(f"You found: {chosen['name']}!", Colors.BLUE)
+        print_color(f"  {chosen['desc']}", Colors.BLUE)
+        apply_item(player, chosen)
+
+
 def main():
     print_color("=" * 50, Colors.BOLD)
     print_color("   DUNGEON OF THE OPEN5E", Colors.PURPLE)
@@ -349,7 +385,8 @@ def main():
             player = state["player"]
             rooms = state["rooms"]
             monsters = state.get("monsters", get_monsters())
-            print_color(f"Resuming game at room {rooms}...", Colors.GREEN)
+            boss_counter = state.get("boss_counter", new_boss_counter())
+            print_color(f"Resuming game at room {rooms} (next boss in {boss_counter} rooms)...", Colors.GREEN)
         else:
             # Remove outdated save and start fresh
             try:
@@ -363,13 +400,18 @@ def main():
         player = create_character()
         monsters = get_monsters()
         rooms = 1
+        boss_counter = new_boss_counter()
+        print_color(f"Next boss in {boss_counter} rooms...", Colors.GREEN)
 
     while player["hp"] > 0:
         print_color(f"\n=== Room {rooms} ===", Colors.BOLD)
         input("Press Enter to enter the next room...")
 
-        # Boss every 5 rooms
-        is_boss = (rooms % 5 == 0)
+        # Determine if a boss appears based on a counter
+        if 'boss_counter' not in globals():
+            # initialise on first loop if not loaded from save
+            boss_counter = new_boss_counter()
+        is_boss = (boss_counter == 0)
 
         if is_boss:
             monster = random.choice(BOSS_MONSTERS)
@@ -401,17 +443,21 @@ def main():
             break
         if success and is_boss:
             grant_boss_reward(player)
-
+            boss_counter = new_boss_counter()
+        elif success:
+            grant_room_reward(player)
         if input("\nTake a short rest? (y/n): ").strip().lower() == "y":
             heal = random.randint(1, player["max_hp"] // 2)
             player["hp"] = min(player["max_hp"], player["hp"] + heal)
             print_color(f"You heal {heal} HP!", Colors.GREEN)
 
         rooms += 1
+        # Decrease boss counter
+        boss_counter = max(0, boss_counter - 1)
         # Prompt to save after each room
         save_choice = input("Save progress? (s) or continue: ").strip().lower()
         if save_choice == 's':
-            save_game({"player": player, "rooms": rooms, "monsters": monsters})
+            save_game({"player": player, "rooms": rooms, "monsters": monsters, "boss_counter": boss_counter})
 
         # Refresh normal monster list every 3 rooms with higher challenge rating
         if rooms % 3 == 0:
