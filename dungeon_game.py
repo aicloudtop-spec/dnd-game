@@ -286,14 +286,26 @@ def monster_attack(monster, player):
 def cast_spell(player, spell_name, monster):
     spell = get_spell(spell_name)
     if not spell:
-        print_color(f"You cast {spell_name} but nothing happens...", Colors.YELLOW)
-        return 0
-
-    print_color(f"\nYou cast {spell['name']}!", Colors.PURPLE)
-    if spell.get("desc"):
-        print(f"  {spell['desc'][:100]}...")
-
-    dmg = random.randint(3, 8) + player["int"] // 3
+        # Fallback for wizard spells
+        if spell_name == "fireball":
+            dmg = random.randint(8, 12) + player["int"] // 3
+            print_color(f"You cast Fireball! (Fallback)", Colors.PURPLE)
+        elif spell_name == "magic missile":
+            dmg = random.randint(3, 6) + player["int"] // 4
+            print_color(f"You cast Magic Missile! (Fallback)", Colors.PURPLE)
+        elif spell_name == "shield":
+            print_color(f"You cast Shield! AC +2 for this combat.", Colors.PURPLE)
+            player["ac"] += 2
+            player["temp_shield"] = True
+            return 0
+        else:
+            print_color(f"You cast {spell_name} but nothing happens...", Colors.YELLOW)
+            return 0
+    else:
+        print_color(f"\nYou cast {spell['name']}!", Colors.PURPLE)
+        if spell.get("desc"):
+            print(f"  {spell['desc'][:100]}...")
+        dmg = random.randint(3, 8) + player["int"] // 3
     print_color(f"The spell deals {dmg} damage!", Colors.GREEN)
     return dmg
 
