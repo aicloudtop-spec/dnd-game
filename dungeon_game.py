@@ -162,13 +162,21 @@ def combat(player, monster):
             dmg = player_attack(player, monster)
             monster_hp -= dmg
         elif choice == "2" and player["spells"]:
-            print(f"Spells: {', '.join(player['spells'])}")
-            spell = input("Cast which spell? ").strip().lower()
-            if spell in player["spells"]:
-                dmg = cast_spell(player, spell, monster)
-                monster_hp -= dmg
+            # Show spells with numbers for quick selection
+            print("Spells:")
+            for idx, sp in enumerate(player["spells"], start=1):
+                print(f"  {idx}. {sp}")
+            spell_choice = input("Choose spell number: ").strip()
+            if spell_choice.isdigit():
+                idx = int(spell_choice) - 1
+                if 0 <= idx < len(player["spells"]):
+                    spell_name = player["spells"][idx]
+                    dmg = cast_spell(player, spell_name, monster)
+                    monster_hp -= dmg
+                else:
+                    print_color("Invalid spell number!", Colors.RED)
             else:
-                print_color("You don't know that spell!", Colors.RED)
+                print_color("Please enter a number!", Colors.RED)
         elif choice == "3":
             if roll_d20() + player["dex"] // 3 > 10:
                 print_color("You escape!", Colors.GREEN)
