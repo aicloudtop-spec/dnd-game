@@ -402,6 +402,7 @@ def main():
             monsters = state.get("monsters", get_monsters())
             boss_counter = state.get("boss_counter", new_boss_counter())
             selected_campaign = state.get("campaign", None)
+            campaign_index = state.get("campaign_index", 0)
             if selected_campaign:
                 print_color(f"Resuming campaign: {selected_campaign['name']}", Colors.GREEN)
             print_color(f"Resuming game at room {rooms} (next boss in {boss_counter} rooms)...", Colors.GREEN)
@@ -478,6 +479,11 @@ def main():
         if success and is_boss:
             grant_boss_reward(player)
             boss_counter = new_boss_counter()
+            # Advance to next campaign in sequence
+            if selected_campaign and campaigns and campaign_index < len(campaigns)-1:
+                campaign_index += 1
+                selected_campaign = campaigns[campaign_index]
+                print_color(f"*** Proceeding to next campaign: {selected_campaign['name']} ***", Colors.PURPLE)
         elif success:
             grant_room_reward(player)
         if input("\nTake a short rest? (y/n): ").strip().lower() == "y":
@@ -491,7 +497,7 @@ def main():
         # Prompt to save after each room
         save_choice = input("Save progress? (s) or continue: ").strip().lower()
         if save_choice == 's':
-            save_game({"player": player, "rooms": rooms, "monsters": monsters, "boss_counter": boss_counter, "campaign": selected_campaign})
+            save_game({"player": player, "rooms": rooms, "monsters": monsters, "boss_counter": boss_counter, "campaign": selected_campaign, "campaign_index": campaign_index})
 
         # Refresh normal monster list every 3 rooms with higher challenge rating
         if rooms % 3 == 0:
