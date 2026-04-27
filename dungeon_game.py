@@ -71,6 +71,97 @@ BOSS_MONSTERS = [
      "actions": [{"name": "Eye Ray", "damage": "22"}]},
 ]
 
+# -------- Boss‑loot system --------
+
+def apply_item(player, item):
+    """Apply an item's effect to the player."""
+    eff = item.get("effect")
+    val = item.get("value", 0)
+    if eff == "heal":
+        player["hp"] = min(player["max_hp"], player["hp"] + val)
+        print_color(f"  You heal {val} HP! (Now {player['hp']}/{player['max_hp']})", Colors.GREEN)
+    elif eff == "damage":
+        player["damage"] += val
+        print_color(f"  Your damage increased by {val}! (Now {player['damage']})", Colors.GREEN)
+    elif eff == "ac":
+        player["ac"] += val
+        print_color(f"  Your AC increased by {val}! (Now {player['ac']})", Colors.GREEN)
+    elif eff == "max_hp":
+        player["max_hp"] += val
+        player["hp"] = min(player["max_hp"], player["hp"] + val)
+        print_color(f"  Your max HP increased by {val}! (Now {player['max_hp']})", Colors.GREEN)
+    elif eff == "spell":
+        if item.get("spell") not in player["spells"]:
+            player["spells"].append(item["spell"])
+            print_color(f"  You learned a new spell: {item['spell']}!", Colors.PURPLE)
+    else:
+        # dud – no effect or a small penalty
+        if eff == "none":
+            print_color("  It's just a worthless trinket...", Colors.RED)
+        else:
+            # small penalty
+            player["hp"] = max(1, player["hp"] - 5)
+            print_color("  The item is cursed! You lose 5 HP.", Colors.RED)
+
+
+def grant_boss_reward(player):
+    """Roll a d20 to determine the boss loot quality."""
+    print_color("\n*** Boss Defeated! Rolling for loot... ***", Colors.YELLOW)
+    roll = roll_d20()
+    print_color(f"Loot roll: {roll}", Colors.YELLOW)
+
+    if roll <= 4:
+        # Dud or minor penalty
+        pool = [
+            {"name": "Cursed Trinket", "effect": "none", "desc": "A worthless, slightly creepy bauble."},
+            {"name": "Moldy Scroll", "effect": "minor_damage", "desc": "It crumbles and gives you a headache."},
+        ]
+        chosen = random.choice(pool)
+        print_color(f"You found: {chosen['name']}!", Colors.RED)
+        print_color(f"  {chosen['desc']}", Colors.RED)
+        apply_item(player, chosen)
+
+    elif roll <= 12:
+        # Minor item
+        pool = [
+            {"name": "Healing Potion", "effect": "heal", "value": 10, "desc": "A small vial of healing fluid."},
+            {"name": "Sharpening Stone", "effect": "damage", "value": 2, "desc": "+2 damage."},
+            {"name": "Minor Shield Ring", "effect": "ac", "value": 1, "desc": "+1 AC."},
+        ]
+        chosen = random.choice(pool)
+        print_color(f"You found: {chosen['name']}!", Colors.GREEN)
+        print_color(f"  {chosen['desc']}", Colors.GREEN)
+        apply_item(player, chosen)
+
+    elif roll <= 18:
+        # Good item
+        pool = [
+            {"name": "Enchanted Sword", "effect": "damage", "value": 4, "desc": "+4 damage."},
+            {"name": "Reinforced Shield", "effect": "ac", "value": 2, "desc": "+2 AC."},
+            {"name": "Ring of Vigor", "effect": "max_hp", "value": 10, "desc": "+10 max HP."},
+            {"name": "Spell Scroll (Fireball)", "effect": "spell", "spell": "fireball", "desc": "You learn a new spell!"},
+        ]
+        chosen = random.choice(pool)
+        print_color(f"You found: {chosen['name']}!", Colors.BLUE)
+        print_color(f"  {chosen['desc']}", Colors.BLUE)
+        apply_item(player, chosen)
+
+    else:
+        # Epic / 19‑20
+        pool = [
+            {"name": "Dragon Scale Armor", "effect": "ac", "value": 4, "desc": "+4 AC."},
+            {"name": "Staff of Power", "effect": "damage", "value": 6, "desc": "+6 damage."},
+            {"name": "Amulet of Health", "effect": "max_hp", "value": 20, "desc": "+20 max HP."},
+            {"name": "Ring of Three Wishes", "effect": "heal", "value": 50, "desc": "Massive heal!"},
+        ]
+        chosen = random.choice(pool)
+        print_color(f"You found: {chosen['name']}!", Colors.PURPLE)
+        print_color(f"  {chosen['desc']}", Colors.PURPLE)
+        apply_item(player, chosen)
+
+    print_color("="*40, Colors.YELLOW)
+
+
 def get_monsters(challenge="0-4"):
     """Fetch monsters from Open5e API (fallback list if needed)."""
     try:
@@ -155,7 +246,8 @@ def cast_spell(player, spell_name, monster):
     print_color(f"The spell deals {dmg} damage!", Colors.GREEN)
     return dmg
 
-def combat(player, monster):
+def combat(player, monster, is_boss=False):
+    # Return a tuple (won, is_boss) so we can grant rewards after boss fights
     print_color(f"\n=== COMBAT: {player['name']} vs {monster['name']} ===", Colors.BOLD)
     desc = monster.get("desc", "A dangerous foe")
     print(f"Monster: {desc} (HP:?, AC:{monster['ac']})")
@@ -254,10 +346,12 @@ def main():
                 except ValueError:
                     pass
 
-        success = combat(player, monster)
+        success = combat(player, monster, is_boss)
 
         if not success:
             break
+        if success and is_boss:
+            grant_boss_reward(player)
 
         if input("\nTake a short rest? (y/n): ").strip().lower() == "y":
             heal = random.randint(1, player["max_hp"] // 2)
