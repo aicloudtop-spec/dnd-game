@@ -45,6 +45,12 @@ python3 dungeon_game.py
 - Python 3.6+
 - `requests` library (`pip install requests`)
 
+## Campaigns
+
+- **A Most Potent Brew** – A brewing competition turns deadly when a mysterious brew causes chaos.
+- **The Wolves of Welton** – Wolves are terrorizing Welton; uncover why they’ve turned violent.
+- **A Wild Sheep Chase** – A whimsical adventure involving a magical sheep and a frantic chase across the countryside.
+
 ## License
 
 Open-source, MIT. Fork it, mod it, enjoy it!
