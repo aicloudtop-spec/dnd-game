@@ -6,6 +6,7 @@ A simple D&D-style text adventure using the Open5e API for monsters and spells.
 
 import requests
 import random
+import time
 import json
 import os
 
@@ -205,6 +206,13 @@ def load_campaigns():
         print_color(f"Could not load campaigns: {e}", Colors.RED)
         return []
 
+
+def present_story(campaign):
+    """Print narrative lines for the campaign."""
+    if campaign and campaign.get('story'):
+        for line in campaign['story']:
+            print_color(line, Colors.PURPLE)
+            time.sleep(1)
 def get_monsters(challenge="0-4"):
     """Fetch monsters from Open5e API (fallback list if needed)."""
     try:

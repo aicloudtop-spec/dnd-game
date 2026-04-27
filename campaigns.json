@@ -4,19 +4,49 @@
       "name": "A Most Potent Brew",
       "description": "A brewing competition turns deadly when a mysterious brew causes chaos.",
       "difficulty": "1",
-      "monsters": ["Goblin", "Kobold", "Rat"]
+      "monsters": [
+        "Goblin",
+        "Kobold",
+        "Rat"
+      ],
+      "story": [
+        "You enter the quiet village of Bramblewood.",
+        "The smell of fresh hops fills the air, but something is wrong.",
+        "The local brewer, Thoran, looks terrified.",
+        "He begs you to investigate the strange brew causing chaos."
+      ]
     },
     {
       "name": "The Wolves of Welton",
-      "description": "Wolves are terrorizing the town of Welton. Discover why they’ve turned violent.",
+      "description": "Wolves are terrorizing the town of Welton. Discover why they\u2019ve turned violent.",
       "difficulty": "2",
-      "monsters": ["Wolf", "Worg", "Dire Wolf"]
+      "monsters": [
+        "Wolf",
+        "Worg",
+        "Dire Wolf"
+      ],
+      "story": [
+        "The town of Welton is on edge.",
+        "Wolves have been attacking livestock and villagers alike.",
+        "The mayor offers a reward for discovering the cause.",
+        "You set out into the dark forest..."
+      ]
     },
     {
       "name": "A Wild Sheep Chase",
       "description": "A whimsical adventure involving a magical sheep and a frantic chase across the countryside.",
       "difficulty": "3",
-      "monsters": ["Sheep", "Blink Dog", "Displacer Beast"]
+      "monsters": [
+        "Sheep",
+        "Blink Dog",
+        "Displacer Beast"
+      ],
+      "story": [
+        "A magical sheep has escaped from the wizard's tower.",
+        "It's causing mayhem across the countryside.",
+        "You must catch it before it ruins the harvest!",
+        "Chase begins!"
+      ]
     }
   ]
 }
