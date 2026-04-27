@@ -391,6 +391,8 @@ def main():
     print_color("=" * 50, Colors.BOLD)
 
     selected_campaign = None
+    campaign_index = 0
+    campaigns = load_campaigns()
 
     # Check for saved game
     state = load_game()
