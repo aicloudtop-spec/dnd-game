@@ -298,6 +298,17 @@ def cast_spell(player, spell_name, monster):
     return dmg
 
 def combat(player, monster, is_boss=False):
+    # Apply temporary perk for this combat (if any)
+    perk = player.pop("temp_perk", None)
+    orig_damage = player["damage"]
+    orig_ac = player["ac"]
+    if perk:
+        if "damage" in perk:
+            player["damage"] += 2
+        if "AC" in perk:
+            player["ac"] += 2
+        if "temporary HP" in perk:
+            player["hp"] = min(player["max_hp"], player["hp"] + 10)
     # Return a tuple (won, is_boss) so we can grant rewards after boss fights
     print_color(f"\n=== COMBAT: {player['name']} vs {monster['name']} ===", Colors.BOLD)
     desc = monster.get("desc", "A dangerous foe")
@@ -351,9 +362,13 @@ def combat(player, monster, is_boss=False):
 
     if player["hp"] > 0:
         print_color(f"\n*** You defeated the {monster['name']}! ***", Colors.GREEN)
+        player["damage"] = orig_damage
+        player["ac"] = orig_ac
         return True
     else:
         print_color("\n*** You have been defeated... ***", Colors.RED)
+        player["damage"] = orig_damage
+        player["ac"] = orig_ac
         return False
 
 # Main game loop
@@ -451,6 +466,17 @@ def main():
     while player["hp"] > 0:
         print_color(f"\n=== Room {rooms} ===", Colors.BOLD)
         input("Press Enter to enter the next room...")
+        # Random rest site (8% chance)
+        if random.randint(1, 100) <= 8:
+            print_color("\n*** You discover a hidden rest site! ***", Colors.BLUE)
+            player["hp"] = player["max_hp"]
+            print_color("You are fully healed!", Colors.GREEN)
+            # Choose a temporary perk
+            perks = ["+2 damage next fight", "+2 AC next fight", "+10 temporary HP"]
+            perk = random.choice(perks)
+            print_color(f"You gain a temporary perk: {perk}", Colors.YELLOW)
+            player["temp_perk"] = perk
+
 
         # Determine if a boss appears based on a counter
         if 'boss_counter' not in globals():
