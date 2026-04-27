@@ -192,6 +192,19 @@ def grant_boss_reward(player):
     print_color("="*40, Colors.YELLOW)
 
 
+# Campaign system
+CAMPAIGN_FILE = "campaigns.json"
+
+def load_campaigns():
+    """Load campaigns from the JSON file."""
+    try:
+        with open(CAMPAIGN_FILE, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        return data.get("campaigns", [])
+    except Exception as e:
+        print_color(f"Could not load campaigns: {e}", Colors.RED)
+        return []
+
 def get_monsters(challenge="0-4"):
     """Fetch monsters from Open5e API (fallback list if needed)."""
     try:
@@ -377,6 +390,8 @@ def main():
     print_color("   DUNGEON OF THE OPEN5E", Colors.PURPLE)
     print_color("=" * 50, Colors.BOLD)
 
+    selected_campaign = None
+
     # Check for saved game
     state = load_game()
     if state:
@@ -386,6 +401,9 @@ def main():
             rooms = state["rooms"]
             monsters = state.get("monsters", get_monsters())
             boss_counter = state.get("boss_counter", new_boss_counter())
+            selected_campaign = state.get("campaign", None)
+            if selected_campaign:
+                print_color(f"Resuming campaign: {selected_campaign['name']}", Colors.GREEN)
             print_color(f"Resuming game at room {rooms} (next boss in {boss_counter} rooms)...", Colors.GREEN)
         else:
             # Remove outdated save and start fresh
@@ -398,6 +416,22 @@ def main():
             rooms = 1
     else:
         player = create_character()
+        # Campaign selection
+        campaigns = load_campaigns()
+        selected_campaign = None
+        if campaigns:
+            print("\nAvailable campaigns:")
+            for idx, c in enumerate(campaigns, 1):
+                print(f"  {idx}. {c['name']} (Difficulty: {c['difficulty']})")
+            print("  0. Default dungeon")
+            choice = input("Choose a campaign (number): ").strip()
+            try:
+                ci = int(choice)
+                if ci > 0 and ci <= len(campaigns):
+                    selected_campaign = campaigns[ci-1]
+                    print_color(f"Starting campaign: {selected_campaign['name']}", Colors.GREEN)
+            except:
+                pass
         monsters = get_monsters()
         rooms = 1
         boss_counter = new_boss_counter()
@@ -457,7 +491,7 @@ def main():
         # Prompt to save after each room
         save_choice = input("Save progress? (s) or continue: ").strip().lower()
         if save_choice == 's':
-            save_game({"player": player, "rooms": rooms, "monsters": monsters, "boss_counter": boss_counter})
+            save_game({"player": player, "rooms": rooms, "monsters": monsters, "boss_counter": boss_counter, "campaign": selected_campaign})
 
         # Refresh normal monster list every 3 rooms with higher challenge rating
         if rooms % 3 == 0:
