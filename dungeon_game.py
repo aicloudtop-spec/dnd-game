@@ -58,8 +58,21 @@ def create_character():
     return char
 
 # Fetch monsters from Open5e API
+# Global boss list – you can expand as you like
+BOSS_MONSTERS = [
+    {"name": "Ancient Red Dragon", "hp": 200, "ac": 22,
+     "desc": "A massive dragon breathing scorching fire.",
+     "actions": [{"name": "Fire Breath", "damage": "30"}]},
+    {"name": "Lich", "hp": 150, "ac": 18,
+     "desc": "Undead sorcerer wielding forbidden magic.",
+     "actions": [{"name": "Necrotic Blast", "damage": "25"}]},
+    {"name": "Beholder", "hp": 180, "ac": 20,
+     "desc": "A floating eye monster with many deadly rays.",
+     "actions": [{"name": "Eye Ray", "damage": "22"}]},
+]
+
 def get_monsters(challenge="0-4"):
-    """Fetch monsters from Open5e API"""
+    """Fetch monsters from Open5e API (fallback list if needed)."""
     try:
         url = f"{API_BASE}/monsters/?challenge_rating={challenge}&limit=20"
         response = requests.get(url, timeout=10)
@@ -69,7 +82,7 @@ def get_monsters(challenge="0-4"):
     except Exception as e:
         print_color(f"API error: {e}", Colors.RED)
 
-    # Fallback monsters if API fails
+    # Fallback monsters if API fails – keep them low‑level for early play
     return [
         {"name": "Goblin", "hp": 7, "ac": 15, "challenge_rating": "1/4", "actions": [{"name": "Scimitar", "damage": "5"}], "desc": "A small, wicked creature"},
         {"name": "Kobold", "hp": 5, "ac": 12, "challenge_rating": "1/8", "actions": [{"name": "Dagger", "damage": "4"}], "desc": "A reptilian humanoid"},
@@ -214,9 +227,32 @@ def main():
         print_color(f"\n=== Room {rooms} ===", Colors.BOLD)
         input("Press Enter to enter the next room...")
 
-        monster = random.choice(monsters)
-        print_color(f"\nA {monster['name']} appears!", Colors.RED)
+        # Boss every 5 rooms
+        is_boss = (rooms % 5 == 0)
+
+        if is_boss:
+            monster = random.choice(BOSS_MONSTERS)
+            print_color(f"\n*** BOSS FIGHT: {monster['name']} appears! ***", Colors.RED)
+        else:
+            monster = random.choice(monsters)
+            print_color(f"\nA {monster['name']} appears!", Colors.RED)
+
         print(f"  {monster.get('desc', 'It looks dangerous')}")
+
+        # Scale normal monsters based on current floor (every 5 rooms)
+        if not is_boss:
+            floor = (rooms - 1) // 5
+            scale = 1 + floor * 0.2  # 20% HP increase per floor
+            monster = monster.copy()  # avoid modifying the original list item
+            monster["hp"] = int(monster.get("hp", 10) * scale)
+            # Slightly scale damage too
+            for action in monster.get("actions", []):
+                dmg_str = action.get("damage", "3")
+                try:
+                    base = int(dmg_str.split("d")[-1].split()[0])
+                    action["damage"] = str(int(base * scale))
+                except ValueError:
+                    pass
 
         success = combat(player, monster)
 
@@ -230,6 +266,7 @@ def main():
 
         rooms += 1
 
+        # Refresh normal monster list every 3 rooms with higher challenge rating
         if rooms % 3 == 0:
             print_color("\n*** NEW FLOOR ***", Colors.PURPLE)
             floor = rooms // 3
