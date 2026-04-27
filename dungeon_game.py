@@ -336,7 +336,7 @@ def combat(player, monster, is_boss=False):
         elif choice == "3":
             if roll_d20() + player["dex"] // 3 > 10:
                 print_color("You escape!", Colors.GREEN)
-                return False
+                return None
             else:
                 print_color("You can't escape!", Colors.RED)
         else:
@@ -482,20 +482,24 @@ def main():
                 except ValueError:
                     pass
 
-        success = combat(player, monster, is_boss)
+        outcome = combat(player, monster, is_boss)
 
-        if not success:
+        if outcome is False:   # player died
             break
-        if success and is_boss:
-            grant_boss_reward(player)
-            boss_counter = new_boss_counter()
-            # Advance to next campaign in sequence
-            if selected_campaign and campaigns and campaign_index < len(campaigns)-1:
-                campaign_index += 1
-                selected_campaign = campaigns[campaign_index]
-                print_color(f"*** Proceeding to next campaign: {selected_campaign['name']} ***", Colors.PURPLE)
-        elif success:
-            grant_room_reward(player)
+        if outcome is None:    # escaped
+            print_color("You safely escape back to the corridor.", Colors.GREEN)
+            # Allow rest and continue to next room
+        else:                  # victory
+            if is_boss:
+                grant_boss_reward(player)
+                boss_counter = new_boss_counter()
+                # Advance to next campaign in sequence
+                if selected_campaign and campaigns and campaign_index < len(campaigns)-1:
+                    campaign_index += 1
+                    selected_campaign = campaigns[campaign_index]
+                    print_color(f"*** Proceeding to next campaign: {selected_campaign['name']} ***", Colors.PURPLE)
+            else:
+                grant_room_reward(player)
         if input("\nTake a short rest? (y/n): ").strip().lower() == "y":
             heal = random.randint(1, player["max_hp"] // 2)
             player["hp"] = min(player["max_hp"], player["hp"] + heal)
