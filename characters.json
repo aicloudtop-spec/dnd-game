@@ -1,0 +1,58 @@
+{
+  "races": [
+    "Alseid",
+    "Catfolk",
+    "Darakhul",
+    "Derro",
+    "Dragonborn",
+    "Drow",
+    "Dwarf",
+    "Elf",
+    "Erina",
+    "Gearforged",
+    "Gnome",
+    "Half-Elf"
+  ],
+  "classes": [
+    "Barbarian",
+    "Bard",
+    "Cleric",
+    "Druid",
+    "Fighter",
+    "Monk",
+    "Paladin",
+    "Ranger",
+    "Rogue",
+    "Sorcerer",
+    "Warlock",
+    "Wizard"
+  ],
+  "backgrounds": [
+    "Acolyte",
+    "Artisan",
+    "Charlatan",
+    "Con Artist",
+    "Court Servant",
+    "Crime Syndicate Member",
+    "Criminal",
+    "Desert Runner",
+    "Destined",
+    "Diplomat",
+    "Elemental Warden",
+    "Entertainer"
+  ],
+  "feats": [
+    "Ace Driver",
+    "Athletic",
+    "Attentive",
+    "Battle Caster",
+    "Boundless Reserves",
+    "Brutal Attack",
+    "Bull Rush",
+    "Combat Thievery",
+    "Covert Training",
+    "Crafting Expert",
+    "Crossbow Expertise",
+    "Deadeye"
+  ]
+}

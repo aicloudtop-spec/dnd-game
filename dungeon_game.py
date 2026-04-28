@@ -66,7 +66,7 @@ def create_character():
     classes = {
         "1": {"name": "Fighter", "hp": 12, "ac": 16, "str": 16, "dex": 12, "int": 10, "damage": 8, "spells": []},
         "2": {"name": "Rogue", "hp": 8, "ac": 14, "str": 10, "dex": 16, "int": 12, "damage": 6, "spells": []},
-        "3": {"name": "Wizard", "hp": 6, "ac": 12, "str": 8, "dex": 12, "int": 16, "damage": 4, "spells": ["fireball", "magic missile", "shield"]}
+        "3": {"name": "Wizard", "hp": 6, "ac": 12, "str": 8, "dex": 12, "int": 16, "damage": 4, "mana": 20, "max_mana": 20, "spells": ["fireball", "magic missile", "shield"]}
     }
 
     choice = input("Choice (1-3): ").strip() or "1"
@@ -285,6 +285,15 @@ def monster_attack(monster, player):
 
 def cast_spell(player, spell_name, monster):
     spell = get_spell(spell_name)
+    
+    # Mana cost check (wizard only)
+    if "mana" in player:
+        mana_costs = {"fireball": 8, "magic missile": 4, "shield": 3}
+        cost = mana_costs.get(spell_name, 5)
+        if player["mana"] < cost:
+            print_color(f"Not enough mana! Need {cost}, have {player['mana']}", Colors.RED)
+            return 0
+        player["mana"] -= cost
     if not spell:
         # Fallback for wizard spells
         if spell_name == "fireball":
@@ -323,14 +332,26 @@ def combat(player, monster, is_boss=False):
             player["hp"] = min(player["max_hp"], player["hp"] + 10)
     # Return a tuple (won, is_boss) so we can grant rewards after boss fights
     print_color(f"\n=== COMBAT: {player['name']} vs {monster['name']} ===", Colors.BOLD)
+    
+    # Random shield at start of combat (15% chance)
+    if random.randint(1, 100) <= 15 and player.get("ac") is not None:
+        print_color("\n*** A magical shield shields you! ***", Colors.BLUE)
+        player["ac"] += 2
+        shield_active = True
+    else:
+        shield_active = False
     desc = monster.get("desc", "A dangerous foe")
     print(f"Monster: {desc} (HP:?, AC:{monster['ac']})")
 
     monster_hp = monster.get("hp", 10)
 
     while player["hp"] > 0 and monster_hp > 0:
-        print_color(f"\n--- Your HP: {player['hp']}/{player['max_hp']} | Monster HP: {monster_hp} ---", Colors.BLUE)
-        print("1. Attack")
+        mana_display = f" | Mana: {player.get('mana', 0)}/{player.get('max_mana', 0)}" if player.get('mana') is not None else ""
+        print_color(f"\n--- Your HP: {player['hp']}/{player['max_hp']}{mana_display} | Monster HP: {monster_hp} ---", Colors.BLUE)
+        if player.get("mana") is not None:
+            print("1. Arcane Bolt (Free)")
+        else:
+            print("1. Attack")
         if player["spells"]:
             print("2. Cast Spell")
         print("3. Run!")
@@ -338,7 +359,13 @@ def combat(player, monster, is_boss=False):
         choice = input("\nAction: ").strip()
 
         if choice == "1":
-            dmg = player_attack(player, monster)
+            if player.get("mana") is not None:
+                # Wizard's free basic spell
+                print_color("\nYou cast Arcane Bolt!", Colors.PURPLE)
+                dmg = random.randint(2, 5) + player["int"] // 4
+                print_color(f"The bolt deals {dmg} damage!", Colors.GREEN)
+            else:
+                dmg = player_attack(player, monster)
             monster_hp -= dmg
         elif choice == "2" and player["spells"]:
             # Show spells with numbers for quick selection
@@ -368,19 +395,35 @@ def combat(player, monster, is_boss=False):
 
         if monster_hp <= 0:
             break
+    
+    # Regenerate mana after combat
+    if player.get("mana") is not None:
+        mana_regen = random.randint(3, 6)
+        player["mana"] = min(player["max_mana"], player["mana"] + mana_regen)
+        print_color(f"Mana regenerated: +{mana_regen}", Colors.BLUE)
 
         dmg = monster_attack(monster, player)
         player["hp"] -= dmg
+        
+        # Random shield during combat (10% chance after taking damage)
+        if dmg > 0 and random.randint(1, 100) <= 10 and player.get("ac") is not None:
+            print_color("\n*** A protective barrier forms around you! ***", Colors.BLUE)
+            player["ac"] += 2
+            shield_active = True
 
     if player["hp"] > 0:
         print_color(f"\n*** You defeated the {monster['name']}! ***", Colors.GREEN)
         player["damage"] = orig_damage
         player["ac"] = orig_ac
+        if shield_active:
+            player["ac"] -= 2
         return True
     else:
         print_color("\n*** You have been defeated... ***", Colors.RED)
         player["damage"] = orig_damage
         player["ac"] = orig_ac
+        if shield_active:
+            player["ac"] -= 2
         return False
 
 # Main game loop
